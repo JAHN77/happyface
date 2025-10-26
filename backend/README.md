@@ -70,10 +70,10 @@ npm install
 
 ```bash
 # Connect to Supabase via connection pooling
-DATABASE_URL="postgresql://postgres.[TU_CLAVE]:eUswN92MA7nBYbqp@aws-1-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DATABASE_URL="postgresql://postgres.[TU_PROYECTO_ID]:[TU_CONTRASENA]@aws-1-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 
 # Direct connection to the database. Used for migrations
-DIRECT_URL="postgresql://postgres.[TU_CLAVE]:eUswN92MA7nBYbqp@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
+DIRECT_URL="postgresql://postgres.[TU_PROYECTO_ID]:[TU_CONTRASENA]@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
 
 Nota: en caso de ser necesaria pedirla y se enviara de forma independiente
 ```
