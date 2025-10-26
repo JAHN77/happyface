@@ -11,7 +11,7 @@ Este proyecto es la API backend para la plataforma "HappyFace". Construida con *
 
 ---
 ## Estructura del Proyecto
-
+```
 backend/
 │
 ├── node_modules/
@@ -36,7 +36,7 @@ backend/
 ├── package.json
 ├── README.md
 └── server.js
-
+```
 ---
 
 ## ⚙️ Tecnologías Utilizadas
