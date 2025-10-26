@@ -1,0 +1,180 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ====================================
+// 1. ROLES Y MODELOS BASE (USUARIOS)
+// ====================================
+
+// Definición de los roles de usuario
+enum Rol {
+  DIRECTOR
+  PROFESOR
+  PADRE
+}
+
+model Usuario {
+  id                Int      @id @default(autoincrement())
+  correo            String   @unique
+  contrasena        String   // Hash de la contraseña (bcrypt)
+  nombre            String
+  rol               Rol      @default(PADRE)
+  
+  // Relaciones
+  cursosImpartidos  Curso[]          @relation("CursosDelProfesor") 
+  hijosAsociados    Estudiante[]     // Hijos asociados (si es PADRE)
+  
+  mensajesEnviados  Mensaje[]        @relation("MensajesDelRemitente")
+  mensajesRecibidos Mensaje[]        @relation("MensajesDelDestinatario")
+  pagosRealizados   Pago[]
+}
+
+// ====================================
+// 2. MÓDULO ACADÉMICO
+// ====================================
+
+model Asignatura {
+  id        Int      @id @default(autoincrement())
+  nombre    String   @unique 
+  
+  cursos    CursoAsignatura[] 
+  calificaciones Calificacion[] 
+}
+
+model Curso {
+  id          Int      @id @default(autoincrement())
+  nombre        String   @unique
+  descripcion String?
+  
+  // Relación con el profesor (1:M)
+  profesor     Usuario  @relation("CursosDelProfesor", fields: [profesorId], references: [id])
+  profesorId   Int
+  
+  estudiantes  Estudiante[]
+  asignaturas  CursoAsignatura[]
+}
+
+// Tabla Pivote (M:M) entre Curso y Asignatura
+model CursoAsignatura {
+  cursoId      Int
+  asignaturaId Int
+  
+  curso        Curso     @relation(fields: [cursoId], references: [id])
+  asignatura   Asignatura @relation(fields: [asignaturaId], references: [id])
+  
+  @@id([cursoId, asignaturaId])
+}
+
+model Estudiante {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  
+  // Relación con el padre de familia (1:M)
+  padre     Usuario  @relation(fields: [padreId], references: [id])
+  padreId   Int 
+
+  // Relación con el curso (1:M)
+  curso     Curso    @relation(fields: [cursoId], references: [id])
+  cursoId   Int
+  
+  calificaciones Calificacion[]
+  tareas         Tarea[]
+}
+
+model Calificacion {
+  id           Int      @id @default(autoincrement())
+  puntaje      Float
+  fecha        DateTime @default(now())
+  
+  // 🔑 CAMPO DE OBSERVACIONES POR ESTUDIANTE Y MATERIA
+  observaciones String? 
+  
+  // Relación con Estudiante
+  estudiante   Estudiante  @relation(fields: [estudianteId], references: [id])
+  estudianteId Int
+  
+  // Relación con Asignatura
+  asignatura   Asignatura  @relation(fields: [asignaturaId], references: [id])
+  asignaturaId Int
+}
+
+model Tarea {
+  id           Int      @id @default(autoincrement())
+  titulo       String
+  fecha_limite DateTime
+  entregada    Boolean @default(false)
+  
+  estudiante   Estudiante  @relation(fields: [estudianteId], references: [id])
+  estudianteId Int
+}
+
+
+// ====================================
+// 3. CONTENIDO Y COMUNICACIÓN
+// ====================================
+
+model Noticia {
+  id        Int      @id @default(autoincrement())
+  titulo    String
+  contenido String
+  fechaCreacion DateTime @default(now())
+  publicada Boolean  @default(false) // Permite guardar borradores
+}
+
+model Foto {
+  id        Int      @id @default(autoincrement())
+  url       String
+  descripcion String?
+  fechaCreacion DateTime @default(now())
+}
+
+model Mensaje {
+  id               Int      @id @default(autoincrement())
+  contenido        String
+  fechaCreacion    DateTime @default(now())
+  
+  // Remitente
+  remitente        Usuario  @relation("MensajesDelRemitente", fields: [remitenteId], references: [id])
+  remitenteId      Int
+  
+  // Destinatario
+  destinatario     Usuario  @relation("MensajesDelDestinatario", fields: [destinatarioId], references: [id])
+  destinatarioId   Int
+}
+
+// ====================================
+// 4. MÓDULO DE PAGOS
+// ====================================
+
+enum EstadoPago {
+  PENDIENTE
+  COMPLETADO
+  FALLIDO
+}
+
+model Pago {
+  id        Int      @id @default(autoincrement())
+  monto     Float
+  fecha     DateTime @default(now())
+  estado    EstadoPago @default(PENDIENTE)
+  concepto  String // Matrícula, Mensualidad, etc.
+  
+  // Padre que realiza el pago
+  padre     Usuario  @relation(fields: [padreId], references: [id])
+  padreId   Int 
+  
+  referencia_transaccion String? // ID de referencia de la pasarela de pago
+}

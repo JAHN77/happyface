@@ -1,0 +1,9 @@
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+# Dependencias y compilación
+node_modules
+dist
+logs
+
